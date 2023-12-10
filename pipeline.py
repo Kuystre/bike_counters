@@ -21,7 +21,7 @@ def _encode_dates(X):
     return X.drop(columns=["date"])
 
 def _merge_external_data(X):
-    df_ext = pd.read_csv("external_data.csv", parse_dates=["date"])
+    df_ext = pd.read_csv("/kaggle/input/mdsb-2023/external_data.csv", parse_dates=["date"])
 
     X = X.copy()
     
@@ -114,22 +114,18 @@ def create_pipeline():
     return pipe
 
 data_train = pd.read_parquet("/kaggle/input/mdsb-2023/train.parquet")
-data_test = pd.read_parquet("/kaggle/input/mdsb-2023/test.parquet")
-
-data = pd.concat((data_train, data_test))
-
-data['date'] = pd.to_datetime(data['date'])
+data_train['date'] = pd.to_datetime(data_train['date'])
 
 # Filter out the data that falls within the lockdown period
 lockdown_start = pd.to_datetime("2020-10-30")
 lockdown_end = pd.to_datetime("2020-12-15")
-data = data[~((data['date'] >= lockdown_start) & (data['date'] <= lockdown_end))]
+data_train = data_train[~((data_train['date'] >= lockdown_start) & (data_train['date'] <= lockdown_end))]
 
-X = data.drop(["bike_count", "log_bike_count"], axis=1)
-y = data["log_bike_count"]
+X_train = data_train.drop(["bike_count", "log_bike_count"], axis=1)
+y_train = data_train["log_bike_count"]
 
 pipe = create_pipeline()
-pipe.fit(X, y)
+pipe.fit(X_train, y_train)
 
 X_final_test = pd.read_parquet("/kaggle/input/mdsb-2023/final_test.parquet")
 y_pred = pipe.predict(X_final_test)
